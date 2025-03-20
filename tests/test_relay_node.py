@@ -40,6 +40,25 @@ def test_relay__global_node(graphql_client):
     assert response.content == {"building": {"name": "1"}}
 
 
+def test_relay__global_node_without_fragment(graphql_client):
+    apartment = ApartmentFactory.create(building__name="1")
+    global_id = to_global_id(str(ApartmentNode), apartment.pk)
+
+    query = """
+        query {
+          node(id: "%s") {
+            id
+          }
+        }
+    """ % (global_id,)
+
+    response = graphql_client(query)
+    assert response.no_errors, response.errors
+
+    # 1 query for fetching apartment and related buildings
+    assert response.queries.count == 1, response.queries.log
+
+
 def test_relay__node(graphql_client):
     apartment = ApartmentFactory.create(building__name="1")
     global_id = to_global_id(str(ApartmentNode), apartment.pk)
